@@ -9,8 +9,10 @@ import (
 	"testing"
 )
 
+var app = fiber.New()
+
 func TestRouterGetHelloWorld(t *testing.T) {
-	app := fiber.New()
+
 	app.Get("/", func(ctx *fiber.Ctx) error {
 		return ctx.SendString("Hello World")
 	})
@@ -23,4 +25,30 @@ func TestRouterGetHelloWorld(t *testing.T) {
 	bytes, err := io.ReadAll(response.Body)
 	assert.Nil(t, err)
 	assert.Equal(t, "Hello World", string(bytes))
+}
+
+func TestCtx(t *testing.T) {
+
+	app.Get("/hello", func(ctx *fiber.Ctx) error {
+		name := ctx.Query("name", "Guest")
+		return ctx.SendString("Hello " + name)
+	})
+
+	request := httptest.NewRequest(http.MethodGet, "/hello?name=Ibra", nil)
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+	assert.Equal(t, 200, response.StatusCode)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+	assert.Equal(t, "Hello Ibra", string(bytes))
+
+	request = httptest.NewRequest(http.MethodGet, "/hello", nil)
+	response, err = app.Test(request)
+	assert.Nil(t, err)
+	assert.Equal(t, 200, response.StatusCode)
+
+	bytes, err = io.ReadAll(response.Body)
+	assert.Nil(t, err)
+	assert.Equal(t, "Hello Guest", string(bytes))
 }
